@@ -17,6 +17,9 @@ let package = Package(
         .target(
             name: "VerovioCore",
             path: ".",
+            // Humdrum's library is about half of Verovio's code and one of
+            // its slowest files to build; nothing here reads Humdrum.
+            exclude: ["src/hum"],
             sources: [
                 "src",
                 "libmei/dist",
@@ -25,6 +28,16 @@ let package = Package(
             ],
             publicHeadersPath: "bindings/swift-core",
             cxxSettings: [
+                // As Verovio's CMake release builds: asserts compiled out,
+                // no runtime clock, and only the importers these apps use
+                // (MEI and MusicXML; MIDI and timemap output are kept).
+                .define("NDEBUG", .when(configuration: .release)),
+                .define("NO_RUNTIME"),
+                .define("NO_HUMDRUM_SUPPORT"),
+                .define("NO_ABC_SUPPORT"),
+                .define("NO_PAE_SUPPORT"),
+                .define("NO_DARMS_SUPPORT"),
+                .define("NO_GABC_SUPPORT"),
                 .headerSearchPath("include/crc"),
                 .headerSearchPath("include/hum"),
                 .headerSearchPath("include/json"),
@@ -45,10 +58,6 @@ let package = Package(
             path: ".",
             sources: ["bindings/swift-toolkit"],
             resources: [.copy("data")]
-        ),
-        .testTarget(
-            name: "VerovioToolkitTests",
-            dependencies: ["VerovioToolkit"]
         )
     ]
 )
