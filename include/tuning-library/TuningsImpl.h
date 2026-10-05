@@ -65,11 +65,21 @@ inline std::istream &getlineEndingIndependent(std::istream &is, std::string &t)
     }
 }
 
+// The "C" locale, built once. Constructing a named std::locale builds every
+// facet by name (on Apple platforms with time-zone checks), and Verovio
+// builds a default Tuning for every ScoreDef, so a fresh std::locale("C") per
+// number parsed was most of a layout's time on iOS.
+inline const std::locale &c_locale()
+{
+    static const std::locale c("C");
+    return c;
+}
+
 inline double locale_atof(const char *s)
 {
     double result = 0;
     std::istringstream istr(s);
-    istr.imbue(std::locale("C"));
+    istr.imbue(c_locale());
     istr >> result;
     return result;
 }
@@ -331,7 +341,7 @@ inline Scale evenDivisionOfSpanByM(int Span, int M)
             "You must divide the period into at least one step. You entered " + std::to_string(M));
 
     std::ostringstream oss;
-    oss.imbue(std::locale("C"));
+    oss.imbue(c_locale());
     oss << "! Automatically generated ED" << Span << "-" << M << " scale\n";
     oss << "Automatically generated ED" << Span << "-" << M << " scale\n";
     oss << M << "\n";
@@ -356,7 +366,7 @@ inline Scale evenDivisionOfCentsByM(float Cents, int M, const std::string &lastL
             "You must divide the period into at least one step. You entered " + std::to_string(M));
 
     std::ostringstream oss;
-    oss.imbue(std::locale("C"));
+    oss.imbue(c_locale());
     oss << "! Automatically generated Even Division of " << Cents << " ct into " << M << " scale\n";
     oss << "Automatically generated Even Division of " << Cents << " ct into " << M << " scale\n";
     oss << M << "\n";
@@ -1049,7 +1059,7 @@ inline KeyboardMapping::KeyboardMapping()
       rawText(""), name("")
 {
     std::ostringstream oss;
-    oss.imbue(std::locale("C"));
+    oss.imbue(c_locale());
     oss << "! Default KBM file\n";
     oss << count << "\n"
         << firstMidi << "\n"
@@ -1071,7 +1081,7 @@ inline KeyboardMapping tuneNoteTo(int midiNote, double freq)
 inline KeyboardMapping startScaleOnAndTuneNoteTo(int scaleStart, int midiNote, double freq)
 {
     std::ostringstream oss;
-    oss.imbue(std::locale("C"));
+    oss.imbue(c_locale());
     oss << "! Automatically generated mapping, tuning note " << midiNote << " to " << freq
         << " Hz\n"
         << "!\n"
