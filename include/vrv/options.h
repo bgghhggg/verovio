@@ -679,6 +679,7 @@ public:
     OptionBool m_svgContentBoundingBoxes;
     OptionString m_svgCss;
     OptionBool m_svgViewBox;
+    OptionBool m_svgFontTextLiberation;
     OptionBool m_svgHtml5;
     OptionBool m_svgFormatRaw;
     OptionBool m_svgRemoveXlink;

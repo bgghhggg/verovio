@@ -1178,6 +1178,11 @@ Options::Options()
     m_svgViewBox.Init(false);
     this->Register(&m_svgViewBox, "svgViewBox", &m_general);
 
+    m_svgFontTextLiberation.SetInfo("Embed Liberation in SVG",
+        "With fontTextLiberation, include the Liberation text font in the SVG output (false: measure with it, embed nothing)");
+    m_svgFontTextLiberation.Init(true);
+    this->Register(&m_svgFontTextLiberation, "svgFontTextLiberation", &m_general);
+
     m_svgHtml5.SetInfo("Output SVG for HTML5 embedding",
         "Write data-id and data-class attributes for JS usage and id clash avoidance");
     m_svgHtml5.Init(false);

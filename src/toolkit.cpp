@@ -1779,7 +1779,7 @@ std::string Toolkit::RenderToSVG(int pageNo, bool xmlDeclaration)
         svg.SetSvgViewBox(true);
     }
 
-    if (m_options->m_fontTextLiberation.GetValue()) {
+    if (m_options->m_fontTextLiberation.GetValue() && m_options->m_svgFontTextLiberation.GetValue()) {
         svg.SetUseLiberation(true);
     }
 
