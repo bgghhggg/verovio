@@ -720,6 +720,7 @@ public:
     OptionDbl m_graceFactor;
     OptionBool m_graceRhythmAlign;
     OptionBool m_graceRightAlign;
+    OptionDbl m_hairpinMinLength;
     OptionDbl m_hairpinSize;
     OptionDbl m_hairpinThickness;
     OptionArray m_handwrittenFont;

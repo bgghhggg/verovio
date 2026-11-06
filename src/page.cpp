@@ -21,6 +21,7 @@
 #include "adjustdotsfunctor.h"
 #include "adjustfloatingpositionerfunctor.h"
 #include "adjustgracexposfunctor.h"
+#include "adjusthairpinspacingfunctor.h"
 #include "adjustharmgrpsspacingfunctor.h"
 #include "adjustlayersfunctor.h"
 #include "adjustneumexfunctor.h"
@@ -474,6 +475,10 @@ void Page::LayOutHorizontally()
 
     AdjustHarmGrpsSpacingFunctor adjustHarmGrpsSpacing(doc);
     this->Process(adjustHarmGrpsSpacing);
+
+    // Make room for a hairpin that would be drawn too short to read
+    AdjustHairpinSpacingFunctor adjustHairpinSpacing(doc);
+    this->Process(adjustHairpinSpacing);
 
     // Adjust the arpeg
     AdjustArpegFunctor adjustArpeg(doc);

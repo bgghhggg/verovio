@@ -1340,6 +1340,11 @@ Options::Options()
     m_graceRightAlign.Init(false);
     this->Register(&m_graceRightAlign, "graceRightAlign", &m_generalLayout);
 
+    m_hairpinMinLength.SetInfo("Hairpin minimum length",
+        "The shortest a hairpin is drawn in MEI units; the music under a shorter one is widened (0 for off)");
+    m_hairpinMinLength.Init(0.0, 0.0, 20.0);
+    this->Register(&m_hairpinMinLength, "hairpinMinLength", &m_generalLayout);
+
     m_hairpinSize.SetInfo("Hairpin size", "The hairpin size in MEI units");
     m_hairpinSize.Init(3.0, 1.0, 8.0);
     this->Register(&m_hairpinSize, "hairpinSize", &m_generalLayout);
