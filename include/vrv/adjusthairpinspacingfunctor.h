@@ -19,7 +19,8 @@ namespace vrv {
 /**
  * This class widens the music under a hairpin that would otherwise be drawn shorter than the hairpinMinLength
  * option, as an engraver makes room for a hairpin rather than squeezing it. The room left for a dynamic the
- * hairpin starts or ends on is counted out of its length, as the drawing does. Nothing happens when the option is 0.
+ * hairpin starts or ends on is counted out of its length, as the drawing does. A hairpin that meets another
+ * (a < > swell) needs half the length, so the two make one mark of it. Nothing happens when the option is 0.
  */
 class AdjustHairpinSpacingFunctor : public DocFunctor {
 public:

@@ -50,6 +50,12 @@ FunctorCode AdjustHairpinSpacingFunctor::VisitHairpin(Hairpin *hairpin)
 {
     if (m_minLength <= 0) return FUNCTOR_SIBLINGS;
 
+    // A hairpin that meets another (a < > swell) is half of one mark, and needs half the length
+    ControlElement *leftLink = hairpin->GetLeftLink();
+    ControlElement *rightLink = hairpin->GetRightLink();
+    const bool meets = (leftLink && leftLink->Is(HAIRPIN)) || (rightLink && rightLink->Is(HAIRPIN));
+    const int minLength = meets ? m_minLength / 2 : m_minLength;
+
     LayerElement *start = hairpin->GetStart();
     LayerElement *end = hairpin->GetEnd();
     if (!start || !end || (start == end)) return FUNCTOR_SIBLINGS;
@@ -91,12 +97,10 @@ FunctorCode AdjustHairpinSpacingFunctor::VisitHairpin(Hairpin *hairpin)
     }
 
     // What the drawing takes out: the room for a dynamic at either end, read against the note it hangs on
-    ControlElement *leftLink = hairpin->GetLeftLink();
     if (leftLink && leftLink->Is(DYNAM)) {
         FloatingPositioner *positioner = this->GetPositioner(leftLink);
         if (positioner) startX += std::max(0, positioner->GetContentRight() + unit / 2 - start->GetDrawingX());
     }
-    ControlElement *rightLink = hairpin->GetRightLink();
     if (rightLink && rightLink->Is(DYNAM)) {
         FloatingPositioner *positioner = this->GetPositioner(rightLink);
         if (positioner) endX -= std::max(0, end->GetDrawingX() - (positioner->GetContentLeft() - unit / 2));
@@ -107,7 +111,7 @@ FunctorCode AdjustHairpinSpacingFunctor::VisitHairpin(Hairpin *hairpin)
         endX = std::min(endX, rightBarLineX - 2 * unit);
     }
 
-    const int shortfall = m_minLength - (endX - startX);
+    const int shortfall = minLength - (endX - startX);
     if (shortfall <= 0) return FUNCTOR_SIBLINGS;
 
     // Within one measure the notes under the hairpin are spread; over a barline, the rest of the first measure
