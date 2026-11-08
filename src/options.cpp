@@ -1345,6 +1345,11 @@ Options::Options()
     m_hairpinMinLength.Init(0.0, 0.0, 20.0);
     this->Register(&m_hairpinMinLength, "hairpinMinLength", &m_generalLayout);
 
+    m_systemSpacingByContent.SetInfo("System spacing by content",
+        "The clear distance between two systems in MEI units (0 off); wider only where marks would meet");
+    m_systemSpacingByContent.Init(0.0, 0.0, 60.0);
+    this->Register(&m_systemSpacingByContent, "systemSpacingByContent", &m_generalLayout);
+
     m_hairpinSize.SetInfo("Hairpin size", "The hairpin size in MEI units");
     m_hairpinSize.Init(3.0, 1.0, 8.0);
     this->Register(&m_hairpinSize, "hairpinSize", &m_generalLayout);

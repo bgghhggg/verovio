@@ -851,6 +851,32 @@ FunctorCode AlignSystemsFunctor::VisitPageEnd(Page *page)
     return FUNCTOR_CONTINUE;
 }
 
+int AlignSystemsFunctor::EvenSpacingShift(SystemAligner &systemAligner, double clearUnits, int gap) const
+{
+    if (!m_prevLastStaff || (systemAligner.GetChildCount() < 2)) return 0;
+    StaffAlignment *top = vrv_cast<StaffAlignment *>(systemAligner.GetChild(0));
+    assert(top);
+
+    const int below = m_prevLastStaff->GetOverflowBelow();
+    const int above = top->GetOverflowAbove();
+
+    // A mark has to clear the other system's staff, which runs the whole width,
+    int needed = std::max(below, above);
+    // and any mark of the other system that stands over or under it
+    const int unit = m_doc->GetDrawingUnit(100);
+    const int margin = unit * 2;
+    for (BoundingBox *lower : m_prevLastStaff->GetBBoxesBelow()) {
+        for (BoundingBox *upper : top->GetBBoxesAbove()) {
+            if (lower->HorizontalContentOverlap(upper, margin)) {
+                needed = std::max(needed, m_prevLastStaff->CalcOverflowBelow(lower) + top->CalcOverflowAbove(upper));
+            }
+        }
+    }
+    // One distance for the page; wider only where the marks would otherwise meet
+    const int distance = std::max(int(clearUnits * unit), needed + gap);
+    return below + above + gap - distance;
+}
+
 FunctorCode AlignSystemsFunctor::VisitSystem(System *system)
 {
     SystemAligner &systemAligner = system->m_systemAligner;
@@ -862,6 +888,10 @@ FunctorCode AlignSystemsFunctor::VisitSystem(System *system)
         // const int clefOverflow = m_prevBottomClefOverflow + systemAligner.GetOverflowAbove(m_doc, true);
         const int unit = m_doc->GetDrawingUnit(100);
         m_shift -= std::max(m_systemSpacing, 2 * unit);
+        const double clearUnits = m_doc->GetOptions()->m_systemSpacingByContent.GetValue();
+        if (clearUnits > 0.0) {
+            m_shift += this->EvenSpacingShift(systemAligner, clearUnits, std::max(m_systemSpacing, 2 * unit));
+        }
     }
 
     system->SetDrawingYRel(m_shift);
@@ -873,6 +903,10 @@ FunctorCode AlignSystemsFunctor::VisitSystem(System *system)
         // remove extra system justification factor to get exactly (systemsCount-1)*justificationSystem
         m_justificationSum -= m_doc->GetOptions()->m_justificationSystem.GetValue();
     }
+
+    // The system's last staff, for the next system to compare its marks with
+    const int alignments = systemAligner.GetChildCount();
+    m_prevLastStaff = (alignments > 1) ? vrv_cast<StaffAlignment *>(systemAligner.GetChild(alignments - 2)) : NULL;
 
     // These are currently not used
     m_prevBottomOverflow = systemAligner.GetOverflowBelow(m_doc);
