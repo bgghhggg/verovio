@@ -3354,6 +3354,15 @@ void MusicXmlInput::ReadMusicXmlNote(
                 note->SetStemMod(STEMMODIFIER_z);
             }
         }
+        // A chord member of another length than the chord's keeps its own head and dots on the shared stem.
+        else if (!isTablature && !typeStr.empty()) {
+            const Chord *parentChord = vrv_cast<const Chord *>(m_elementStackMap.at(layer).back());
+            const data_DURATION noteDur = ConvertTypeToDur(typeStr);
+            if (noteDur != parentChord->GetDur() || dots > std::max(0, parentChord->GetDots())) {
+                note->SetDur(noteDur);
+                note->SetDots(dots);
+            }
+        }
 
         // beamspan
         if (!readBeamsAndTuplets) {
