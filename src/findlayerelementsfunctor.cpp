@@ -10,6 +10,9 @@
 //----------------------------------------------------------------------------
 
 #include "alignfunctor.h"
+#include "artic.h"
+#include "chord.h"
+#include "note.h"
 #include "layer.h"
 #include "layerelement.h"
 #include "staff.h"
@@ -189,6 +192,19 @@ FunctorCode FindSpannedLayerElementsFunctor::VisitLayerElement(const LayerElemen
         const LayerElement *end = m_interface->GetEnd();
         if ((layerElement == start) || (layerElement == end)) {
             return FUNCTOR_CONTINUE;
+        }
+
+        // An outside articulation (accent, marcato) on the slur's own end note is moved clear of the slur
+        // afterwards (AdjustArticWithSlursFunctor): it must not push the slur off its notehead first.
+        if (layerElement->Is(ARTIC)) {
+            const Artic *artic = vrv_cast<const Artic *>(layerElement);
+            if (artic->IsOutsideArtic()) {
+                const Object *parent = artic->GetParent();
+                const Object *chord = (parent && parent->Is(NOTE)) ? vrv_cast<const Note *>(parent)->IsChordTone() : NULL;
+                if (parent && ((parent == start) || (parent == end) || (chord && ((chord == start) || (chord == end))))) {
+                    return FUNCTOR_CONTINUE;
+                }
+            }
         }
 
         // Skip if neither parent staff nor cross staff matches the given staff number

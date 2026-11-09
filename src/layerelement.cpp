@@ -463,7 +463,9 @@ int LayerElement::GetDrawingArticulationTopOrBottom(data_STAFFREL place, ArticTy
     for (const Object *child : artics) {
         artic = vrv_cast<const Artic *>(child);
         assert(artic);
-        if (artic->GetDrawingPlace() == place) break;
+        // Only the requested kind counts: an accent (outside) is moved clear of a slur afterwards, so it must not
+        // lift the slur's endpoint off the notehead (the `type` argument was never read)
+        if ((artic->GetDrawingPlace() == place) && (artic->IsInsideArtic() == (type == ARTIC_INSIDE))) break;
         // otherwise reset it because we test on the pointer below
         artic = NULL;
     }
