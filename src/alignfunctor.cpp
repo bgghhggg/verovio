@@ -875,19 +875,22 @@ FunctorCode AlignSystemsFunctor::VisitPageEnd(Page *page)
 
 int AlignSystemsFunctor::MarksNeed(StaffAlignment *prevLast, StaffAlignment *top) const
 {
+    const int prevSystemY = prevLast->GetParentSystem()->GetDrawingYRel();
+
     const int below = prevLast->GetOverflowBelow();
     const int above = top->GetOverflowAbove();
 
     // A mark has to clear the other system's staff, which runs the whole width,
     int needed = std::max(below, above);
-    // and any mark of the other system that stands over or under it. A box can reach no further than its
+    // and any mark of the other system that stands over or under it. The previous system may already stand at
+    // its place on the page, and CalcOverflowBelow reads a box's absolute y; take that place back out. A box can reach no further than its
     // staff's own overflow: one drawn across systems measures from elsewhere and would read as a page or more.
     const int margin = m_doc->GetDrawingUnit(100) * 2;
     for (BoundingBox *lower : prevLast->GetBBoxesBelow()) {
         for (BoundingBox *upper : top->GetBBoxesAbove()) {
             if (lower->HorizontalContentOverlap(upper, margin)) {
                 needed = std::max(needed,
-                    std::min(prevLast->CalcOverflowBelow(lower), below) + std::min(top->CalcOverflowAbove(upper), above));
+                    std::min(prevLast->CalcOverflowBelow(lower) + prevSystemY, below) + std::min(top->CalcOverflowAbove(upper), above));
             }
         }
     }
