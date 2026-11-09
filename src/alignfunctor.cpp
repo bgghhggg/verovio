@@ -813,6 +813,28 @@ FunctorCode AlignSystemsFunctor::VisitPage(Page *page)
 {
     m_justificationSum = 0;
 
+    // With a ceiling, a page takes the widest distance any of its gaps needs, up to the ceiling
+    m_pageDistance = 0;
+    m_prevLastStaff = NULL;
+    const double ceilingUnits = m_doc->GetOptions()->m_systemSpacingMax.GetValue();
+    if ((ceilingUnits > 0.0) && (m_doc->GetOptions()->m_systemSpacingByContent.GetValue() > 0.0)) {
+        const int unit = m_doc->GetDrawingUnit(100);
+        const int gap = std::max(m_systemSpacing, 2 * unit);
+        StaffAlignment *prevLast = NULL;
+        int widest = 0;
+        for (Object *child : page->GetChildren()) {
+            if (!child->Is(SYSTEM)) continue;
+            SystemAligner &aligner = vrv_cast<System *>(child)->m_systemAligner;
+            const int alignments = aligner.GetChildCount();
+            if (alignments < 2) continue;
+            if (prevLast) {
+                widest = std::max(widest, this->MarksNeed(prevLast, vrv_cast<StaffAlignment *>(aligner.GetChild(0))) + gap);
+            }
+            prevLast = vrv_cast<StaffAlignment *>(aligner.GetChild(alignments - 2));
+        }
+        m_pageDistance = std::min(widest, int(ceilingUnits * unit));
+    }
+
     RunningElement *header = page->GetHeader();
     if (header) {
         header->SetDrawingYRel(m_shift);
@@ -851,30 +873,38 @@ FunctorCode AlignSystemsFunctor::VisitPageEnd(Page *page)
     return FUNCTOR_CONTINUE;
 }
 
+int AlignSystemsFunctor::MarksNeed(StaffAlignment *prevLast, StaffAlignment *top) const
+{
+    const int below = prevLast->GetOverflowBelow();
+    const int above = top->GetOverflowAbove();
+
+    // A mark has to clear the other system's staff, which runs the whole width,
+    int needed = std::max(below, above);
+    // and any mark of the other system that stands over or under it. A box can reach no further than its
+    // staff's own overflow: one drawn across systems measures from elsewhere and would read as a page or more.
+    const int margin = m_doc->GetDrawingUnit(100) * 2;
+    for (BoundingBox *lower : prevLast->GetBBoxesBelow()) {
+        for (BoundingBox *upper : top->GetBBoxesAbove()) {
+            if (lower->HorizontalContentOverlap(upper, margin)) {
+                needed = std::max(needed,
+                    std::min(prevLast->CalcOverflowBelow(lower), below) + std::min(top->CalcOverflowAbove(upper), above));
+            }
+        }
+    }
+    return needed;
+}
+
 int AlignSystemsFunctor::EvenSpacingShift(SystemAligner &systemAligner, double clearUnits, int gap) const
 {
     if (!m_prevLastStaff || (systemAligner.GetChildCount() < 2)) return 0;
     StaffAlignment *top = vrv_cast<StaffAlignment *>(systemAligner.GetChild(0));
     assert(top);
 
-    const int below = m_prevLastStaff->GetOverflowBelow();
-    const int above = top->GetOverflowAbove();
-
-    // A mark has to clear the other system's staff, which runs the whole width,
-    int needed = std::max(below, above);
-    // and any mark of the other system that stands over or under it
     const int unit = m_doc->GetDrawingUnit(100);
-    const int margin = unit * 2;
-    for (BoundingBox *lower : m_prevLastStaff->GetBBoxesBelow()) {
-        for (BoundingBox *upper : top->GetBBoxesAbove()) {
-            if (lower->HorizontalContentOverlap(upper, margin)) {
-                needed = std::max(needed, m_prevLastStaff->CalcOverflowBelow(lower) + top->CalcOverflowAbove(upper));
-            }
-        }
-    }
+    const int needed = this->MarksNeed(m_prevLastStaff, top);
     // One distance for the page; wider only where the marks would otherwise meet
-    const int distance = std::max(int(clearUnits * unit), needed + gap);
-    return below + above + gap - distance;
+    const int distance = std::max(std::max(int(clearUnits * unit), m_pageDistance), needed + gap);
+    return m_prevLastStaff->GetOverflowBelow() + top->GetOverflowAbove() + gap - distance;
 }
 
 FunctorCode AlignSystemsFunctor::VisitSystem(System *system)

@@ -261,12 +261,16 @@ public:
 private:
     // How far to move this system so it stands the page's one distance from the previous one
     int EvenSpacingShift(SystemAligner &systemAligner, double clearUnits, int gap) const;
+    // How far apart two systems must stand for their marks to clear
+    int MarksNeed(StaffAlignment *prevLast, StaffAlignment *top) const;
 
 private:
     // The cumulated shift
     int m_shift;
     // The last staff alignment of the previous system
     StaffAlignment *m_prevLastStaff = NULL;
+    // The distance this page's systems all take, under systemSpacingMax
+    int m_pageDistance = 0;
     // The system margin
     int m_systemSpacing;
     // The (clef) overflow below of the previous system

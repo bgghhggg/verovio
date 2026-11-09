@@ -722,6 +722,7 @@ public:
     OptionBool m_graceRightAlign;
     OptionDbl m_hairpinMinLength;
     OptionDbl m_systemSpacingByContent;
+    OptionDbl m_systemSpacingMax;
     OptionDbl m_hairpinSize;
     OptionDbl m_hairpinThickness;
     OptionArray m_handwrittenFont;

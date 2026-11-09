@@ -1350,6 +1350,11 @@ Options::Options()
     m_systemSpacingByContent.Init(0.0, 0.0, 60.0);
     this->Register(&m_systemSpacingByContent, "systemSpacingByContent", &m_generalLayout);
 
+    m_systemSpacingMax.SetInfo("System spacing ceiling",
+        "With systemSpacingByContent, a page takes the widest distance its gaps need, up to this many MEI units (0 off)");
+    m_systemSpacingMax.Init(0.0, 0.0, 60.0);
+    this->Register(&m_systemSpacingMax, "systemSpacingMax", &m_generalLayout);
+
     m_hairpinSize.SetInfo("Hairpin size", "The hairpin size in MEI units");
     m_hairpinSize.Init(3.0, 1.0, 8.0);
     this->Register(&m_hairpinSize, "hairpinSize", &m_generalLayout);
