@@ -88,6 +88,12 @@ bool Artic::IsInsideArtic(data_ARTICULATION artic) const
         return false;
     }
 
+    // accentByNotehead: an accent sits by its notehead, in the staff and under a slur, as a staccato does
+    if ((artic == ARTICULATION_acc) || (artic == ARTICULATION_acc_soft)) {
+        const Doc *doc = vrv_cast<const Doc *>(this->GetFirstAncestor(DOC));
+        if (doc && doc->GetOptions()->m_accentByNotehead.GetValue()) return true;
+    }
+
     const auto end = Artic::s_outStaffArtic.end();
     const auto it = std::find(Artic::s_outStaffArtic.begin(), end, artic);
     return (it == end);

@@ -9,6 +9,8 @@
 
 //----------------------------------------------------------------------------
 
+#include "accid.h"
+#include "artic.h"
 #include "doc.h"
 #include "elementpart.h"
 #include "staff.h"
@@ -88,7 +90,24 @@ FunctorCode AdjustArticFunctor::VisitArtic(Artic *artic)
     int y = artic->GetDrawingY();
     int yShift = 0;
 
-    if (artic->IsInsideArtic()) {
+    // accentByNotehead: an accent keeps one distance from its notehead wherever the note lies, so a run of accents
+    // follows the line of the heads: its middle a space and a half from the head's (a space clear of the head, in
+    // the next space for a note on a line, across the next line for a note in a space), further only to clear the
+    // note's own accidental.
+    const data_ARTICULATION first = artic->GetArticFirst();
+    if (((first == ARTICULATION_acc) || (first == ARTICULATION_acc_soft)) && artic->IsInsideArtic()) {
+        const char32_t code = artic->GetArticGlyph(first, artic->GetDrawingPlace());
+        const int half = m_doc->GetGlyphHeight(code, staff->m_drawingStaffSize, false) / 2;
+        const int halfWidth = m_doc->GetGlyphWidth(code, staff->m_drawingStaffSize, false) / 2;
+        int gap = 2 * unit - half;
+        const Accid *accid = vrv_cast<const Accid *>(m_parent->FindDescendantByType(ACCID));
+        if (accid && accid->HasContentBB() && (accid->GetContentRight() > artic->GetDrawingX() - halfWidth)) {
+            const int reach = (direction > 0) ? accid->GetContentTop() - y : y - accid->GetContentBottom();
+            while (gap < reach + unit / 2) gap += 2 * unit;
+        }
+        yShift = gap * direction;
+    }
+    else if (artic->IsInsideArtic()) {
         // If we are above the top of the staff, just pile them up
         if ((artic->GetDrawingPlace() == STAFFREL_above) && (y > staff->GetDrawingY())) {
             yShift += spacingBottom;

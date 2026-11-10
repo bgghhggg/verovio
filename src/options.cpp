@@ -1157,6 +1157,11 @@ Options::Options()
     m_smuflTextFont.Init(SMUFLTEXTFONT_embedded, &Option::s_smuflTextFont);
     this->Register(&m_smuflTextFont, "smuflTextFont", &m_general);
 
+    m_accentByNotehead.SetInfo("Accent by the notehead",
+        "Place accents next to the notehead, inside the staff and inside slurs, instead of outside the staff");
+    m_accentByNotehead.Init(false);
+    this->Register(&m_accentByNotehead, "accentByNotehead", &m_general);
+
     m_staccatoCenter.SetInfo(
         "Center staccato", "Align staccato and staccatissimo articulations with center of the note");
     m_staccatoCenter.Init(false);
