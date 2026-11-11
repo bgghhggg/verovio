@@ -1162,6 +1162,11 @@ Options::Options()
     m_accentByNotehead.Init(false);
     this->Register(&m_accentByNotehead, "accentByNotehead", &m_general);
 
+    m_graceSlurByMainStem.SetInfo("Grace slur by the main note's stem",
+        "A slur from a grace note runs under the notes unless the main note's stem points down, then over them");
+    m_graceSlurByMainStem.Init(false);
+    this->Register(&m_graceSlurByMainStem, "graceSlurByMainStem", &m_general);
+
     m_staccatoCenter.SetInfo(
         "Center staccato", "Align staccato and staccatissimo articulations with center of the note");
     m_staccatoCenter.Init(false);

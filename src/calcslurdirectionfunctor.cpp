@@ -126,7 +126,17 @@ curvature_CURVEDIR CalcSlurDirectionFunctor::GetGraceCurveDirection(const Slur *
     const StemmedDrawingInterface *startStemDrawInterface = start->GetStemmedDrawingInterface();
     const bool isStemDown
         = startStemDrawInterface && (startStemDrawInterface->GetDrawingStemDir() == STEMDIRECTION_down);
-    return isStemDown ? curvature_CURVEDIR_above : curvature_CURVEDIR_below;
+    if (isStemDown) return curvature_CURVEDIR_above;
+    // graceSlurByMainStem: under the notes, head to head, unless the main note's stem goes down from its head
+    // and would stand in the slur's way; then over them
+    if (m_doc->GetOptions()->m_graceSlurByMainStem.GetValue()) {
+        const LayerElement *end = slur->GetEnd();
+        const StemmedDrawingInterface *endStemDrawInterface = end ? end->GetStemmedDrawingInterface() : NULL;
+        if (endStemDrawInterface && (endStemDrawInterface->GetDrawingStemDir() == STEMDIRECTION_down)) {
+            return curvature_CURVEDIR_above;
+        }
+    }
+    return curvature_CURVEDIR_below;
 }
 
 curvature_CURVEDIR CalcSlurDirectionFunctor::GetPreferredCurveDirection(
