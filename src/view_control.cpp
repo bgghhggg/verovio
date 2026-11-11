@@ -1280,8 +1280,25 @@ void View::DrawControlElementConnector(
     int nbDashes = dist / dashSpace;
 
     int margin = dist / 2;
+    // A stated dash space (extenderDashSpace): dashes an engraver's distance apart, never one alone. The first
+    // stands half a space from the word and the last ends where the line ends; a line with no room for two
+    // dashes is left to the word.
+    const double statedSpace = m_doc->GetOptions()->m_extenderDashSpace.GetValue() * unit;
+    std::vector<int> stated;
+    if (statedSpace > 0) {
+        const int dashLength = 2 * halfDashLength;
+        const int lead = unit;
+        const double room = dist - lead - dashLength;
+        nbDashes = 0;
+        if ((dist >= minDashSpace) && (room >= statedSpace * 0.6)) {
+            const int count = std::max(2, int(room / statedSpace + 0.5) + 1);
+            for (int i = 0; i < count; ++i) {
+                stated.push_back(x1 + lead + halfDashLength + int(room * i / (count - 1)));
+            }
+        }
+    }
     // no dash if the distance is smaller than a dash length
-    if (dist < minDashSpace) {
+    else if (dist < minDashSpace) {
         nbDashes = 0;
     }
     // at least one dash
@@ -1318,6 +1335,10 @@ void View::DrawControlElementConnector(
         int x = x1 + margin + (i * dashSpace);
         x = std::max(x, x1);
 
+        this->DrawFilledRectangle(dc, x - halfDashLength, y, x + halfDashLength, y + width);
+    }
+
+    for (int x : stated) {
         this->DrawFilledRectangle(dc, x - halfDashLength, y, x + halfDashLength, y + width);
     }
 

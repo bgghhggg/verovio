@@ -22,6 +22,7 @@
 #include "adjustfloatingpositionerfunctor.h"
 #include "adjustgracexposfunctor.h"
 #include "adjusthairpinspacingfunctor.h"
+#include "adjustwordspacingfunctor.h"
 #include "adjustharmgrpsspacingfunctor.h"
 #include "adjustlayersfunctor.h"
 #include "adjustneumexfunctor.h"
@@ -479,6 +480,10 @@ void Page::LayOutHorizontally()
     // Make room for a hairpin that would be drawn too short to read
     AdjustHairpinSpacingFunctor adjustHairpinSpacing(doc);
     this->Process(adjustHairpinSpacing);
+
+    // Make room for words over the staff that would run into the next ones
+    AdjustWordSpacingFunctor adjustWordSpacing(doc);
+    this->Process(adjustWordSpacing);
 
     // Adjust the arpeg
     AdjustArpegFunctor adjustArpeg(doc);

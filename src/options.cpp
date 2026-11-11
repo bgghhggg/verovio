@@ -1360,6 +1360,16 @@ Options::Options()
     m_hairpinMinLength.Init(0.0, 0.0, 20.0);
     this->Register(&m_hairpinMinLength, "hairpinMinLength", &m_generalLayout);
 
+    m_wordsMinGap.SetInfo("Words minimum gap",
+        "The gap in MEI units kept between words over the staff and the next words over it, by widening the music (0 for none)");
+    m_wordsMinGap.Init(0.0, 0.0, 20.0);
+    this->Register(&m_wordsMinGap, "wordsMinGap", &m_generalLayout);
+
+    m_extenderDashSpace.SetInfo("Extender dash space",
+        "The distance in MEI units from one dash to the next in the dashed line after a word (0 for the default, five thirds of the staff height)");
+    m_extenderDashSpace.Init(0.0, 0.0, 30.0);
+    this->Register(&m_extenderDashSpace, "extenderDashSpace", &m_generalLayout);
+
     m_systemSpacingByContent.SetInfo("System spacing by content",
         "The clear distance between two systems in MEI units (0 off); wider only where marks would meet");
     m_systemSpacingByContent.Init(0.0, 0.0, 60.0);
