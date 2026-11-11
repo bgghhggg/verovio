@@ -92,8 +92,8 @@ FunctorCode AdjustArticFunctor::VisitArtic(Artic *artic)
 
     // accentByNotehead: an accent keeps one distance from its notehead wherever the note lies, so a run of accents
     // follows the line of the heads: its middle a space and a half from the head's (a space clear of the head, in
-    // the next space for a note on a line, across the next line for a note in a space), further only to clear the
-    // note's own accidental.
+    // the next space for a note on a line, across the next line for a note in a space), stepping aside or further off only to
+    // clear the note's own accidental.
     const data_ARTICULATION first = artic->GetArticFirst();
     if (((first == ARTICULATION_acc) || (first == ARTICULATION_acc_soft)) && artic->IsInsideArtic()) {
         const char32_t code = artic->GetArticGlyph(first, artic->GetDrawingPlace());
@@ -101,9 +101,15 @@ FunctorCode AdjustArticFunctor::VisitArtic(Artic *artic)
         const int halfWidth = m_doc->GetGlyphWidth(code, staff->m_drawingStaffSize, false) / 2;
         int gap = 2 * unit - half;
         const Accid *accid = vrv_cast<const Accid *>(m_parent->FindDescendantByType(ACCID));
-        if (accid && accid->HasContentBB() && (accid->GetContentRight() > artic->GetDrawingX() - halfWidth)) {
+        if (accid && accid->HasContentBB()) {
+            // The accent is a little wider than the notehead: where the note's own accidental stands beside it (its
+            // place across the page is not settled yet, so this goes by its height alone), the accent steps aside
+            // by what it overhangs the head and a quarter of a unit
             const int reach = (direction > 0) ? accid->GetContentTop() - y : y - accid->GetContentBottom();
-            while (gap < reach + unit / 2) gap += 2 * unit;
+            if (gap < reach + unit / 4) {
+                const int overhang = std::max(halfWidth - m_parent->GetDrawingRadius(m_doc), 0);
+                artic->SetDrawingXRel(artic->GetDrawingXRel() + overhang + unit / 4);
+            }
         }
         yShift = gap * direction;
     }
