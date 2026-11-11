@@ -1167,6 +1167,11 @@ Options::Options()
     m_graceSlurByMainStem.Init(false);
     this->Register(&m_graceSlurByMainStem, "graceSlurByMainStem", &m_general);
 
+    m_slurHeightRatio.SetInfo("Slur height ratio",
+        "The greatest height of a slur as a part of its length (0 for no limit): a taller slur lifts its ends off the notes instead");
+    m_slurHeightRatio.Init(0.0, 0.0, 1.0);
+    this->Register(&m_slurHeightRatio, "slurHeightRatio", &m_general);
+
     m_staccatoCenter.SetInfo(
         "Center staccato", "Align staccato and staccatissimo articulations with center of the note");
     m_staccatoCenter.Init(false);

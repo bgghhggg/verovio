@@ -676,6 +676,7 @@ public:
     OptionIntMap m_smuflTextFont;
     OptionBool m_accentByNotehead;
     OptionBool m_graceSlurByMainStem;
+    OptionDbl m_slurHeightRatio;
     OptionBool m_staccatoCenter;
     OptionBool m_svgBoundingBoxes;
     OptionBool m_svgContentBoundingBoxes;

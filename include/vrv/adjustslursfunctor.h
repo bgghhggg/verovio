@@ -126,6 +126,12 @@ private:
 
     // Improve the slur shape by adjusting the control point heights
     void AdjustSlurShape(BezierCurve &bezierCurve, curvature_CURVEDIR dir, int unit) const;
+
+    /**
+     * Limit the height of a slur against its length: a slur that had to arch over something in its middle lifts
+     * both ends by the excess and flattens, its highest point staying where the obstacles put it.
+     */
+    void LimitSlurHeight(BezierCurve &bezierCurve, curvature_CURVEDIR dir, int unit) const;
     ///@}
 
     /**

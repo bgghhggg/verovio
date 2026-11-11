@@ -218,6 +218,8 @@ void AdjustSlursFunctor::AdjustSlur(int unit) const
     if (m_currentCurve->GetDir() != curvature_CURVEDIR_mixed) {
         this->AdjustSlurShape(bezier, m_currentCurve->GetDir(), unit);
         m_currentCurve->UpdatePoints(bezier);
+        this->LimitSlurHeight(bezier, m_currentCurve->GetDir(), unit);
+        m_currentCurve->UpdatePoints(bezier);
     }
 
     // Since we are going to redraw it, reset its bounding box
@@ -261,6 +263,8 @@ void AdjustSlursFunctor::AdjustOuterSlur(const ArrayOfFloatingCurvePositioners &
     // We correct the shape if the slur is too flat or not convex.
     if (m_currentCurve->GetDir() != curvature_CURVEDIR_mixed) {
         this->AdjustSlurShape(bezier, m_currentCurve->GetDir(), unit);
+        m_currentCurve->UpdatePoints(bezier);
+        this->LimitSlurHeight(bezier, m_currentCurve->GetDir(), unit);
         m_currentCurve->UpdatePoints(bezier);
     }
 
@@ -762,6 +766,59 @@ void AdjustSlursFunctor::AdjustSlurShape(BezierCurve &bezierCurve, curvature_CUR
     bezierCurve.c2.x = std::min(bezierCurve.p2.x, bezierCurve.c2.x);
     bezierCurve.c1.x = std::min(bezierCurve.c2.x, bezierCurve.c1.x);
 
+    bezierCurve.UpdateControlPointParams();
+}
+
+void AdjustSlursFunctor::LimitSlurHeight(BezierCurve &bezierCurve, curvature_CURVEDIR dir, int unit) const
+{
+    const double ratio = m_doc->GetOptions()->m_slurHeightRatio.GetValue();
+    if (ratio <= 0.0) return;
+    if (bezierCurve.p1.x >= bezierCurve.p2.x) return;
+    if (m_currentSlur->HasBulge()) return;
+
+    const int sign = (dir == curvature_CURVEDIR_above) ? 1 : -1;
+    const double width = bezierCurve.p2.x - bezierCurve.p1.x;
+    const double rise = bezierCurve.p2.y - bezierCurve.p1.y;
+    const double length = std::hypot(width, rise);
+
+    // The height of the curve over the line between its ends, measured up the page
+    auto chordAt = [&](double x) { return bezierCurve.p1.y + rise * (x - bezierCurve.p1.x) / width; };
+    double height = 0.0;
+    double peak = 0.5;
+    for (int i = 1; i < 16; ++i) {
+        const double t = i / 16.0;
+        const double u = 1.0 - t;
+        const double x = u * u * u * bezierCurve.p1.x + 3 * u * u * t * bezierCurve.c1.x
+            + 3 * u * t * t * bezierCurve.c2.x + t * t * t * bezierCurve.p2.x;
+        const double y = u * u * u * bezierCurve.p1.y + 3 * u * u * t * bezierCurve.c1.y
+            + 3 * u * t * t * bezierCurve.c2.y + t * t * t * bezierCurve.p2.y;
+        if (sign * (y - chordAt(x)) > height) {
+            height = sign * (y - chordAt(x));
+            peak = (x - bezierCurve.p1.x) / width;
+        }
+    }
+
+    // One to two and a half staff spaces, by the length
+    const double limit = std::min(std::max(ratio * length, 2.0 * unit), 5.0 * unit);
+    if (height <= limit) return;
+
+    // The ends give at most two staff spaces; what is left over stays as height. The end nearer the highest point
+    // gives more, so the slur leans the way the notes go.
+    const double lift = std::min(height - limit, 4.0 * unit);
+    const double scale = (height - lift) / height;
+    const double lean = 0.5 + 0.6 * (peak - 0.5);
+    const double each = lift / ((1.0 - lean) * (1.0 - lean) + lean * lean);
+    const int shiftLeft = sign * int(std::min(each * (1.0 - lean), 4.0 * unit));
+    const int shiftRight = sign * int(std::min(each * lean, 4.0 * unit));
+    auto shiftAt = [&](double x) { return shiftLeft + (shiftRight - shiftLeft) * (x - bezierCurve.p1.x) / width; };
+    const double c1Over = bezierCurve.c1.y - chordAt(bezierCurve.c1.x);
+    const double c2Over = bezierCurve.c2.y - chordAt(bezierCurve.c2.x);
+    const double c1Chord = chordAt(bezierCurve.c1.x) + shiftAt(bezierCurve.c1.x);
+    const double c2Chord = chordAt(bezierCurve.c2.x) + shiftAt(bezierCurve.c2.x);
+    bezierCurve.p1.y += shiftLeft;
+    bezierCurve.p2.y += shiftRight;
+    bezierCurve.c1.y = int(c1Chord + c1Over * scale);
+    bezierCurve.c2.y = int(c2Chord + c2Over * scale);
     bezierCurve.UpdateControlPointParams();
 }
 
