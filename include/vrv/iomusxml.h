@@ -29,6 +29,7 @@ namespace vrv {
 
 class Arpeg;
 class BeamSpan;
+class BeatRpt;
 class BracketSpan;
 class Clef;
 class ControlElement;
@@ -356,6 +357,8 @@ private:
     ///@{
     void ReadMusicXmlAttributes(pugi::xml_node, Section *section, Measure *measure);
     void ReadMusicXmlBackup(pugi::xml_node, Measure *measure, const std::string &measureNum);
+    /** Ends the beat-repeat sign being filled, giving it the length of what it covers */
+    void CloseBeatRepeat();
     void ReadMusicXmlBarLine(pugi::xml_node, Measure *measure);
     void ReadMusicXmlDirection(
         pugi::xml_node, Measure *measure, const std::string &measureNum, const short int staffOffset, Section *section);
@@ -634,6 +637,12 @@ private:
     bool m_mRpt = false;
     /* measure repeats */
     bool m_slash = false;
+    /* beat repeats: the stretch is open, its slashes, the sign being filled, its layer and what it covers so far */
+    bool m_beatRpt = false;
+    int m_beatRptSlashes = 1;
+    BeatRpt *m_beatRptCurrent = NULL;
+    Layer *m_beatRptLayer = NULL;
+    int m_beatRptDur = 0;
     /* MIDI ticks */
     int m_ppq = -1;
     /* measure time */

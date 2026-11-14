@@ -1905,6 +1905,7 @@ bool MusicXmlInput::ReadMusicXmlMeasure(
 
     // reset measure time
     m_durTotal = 0;
+    this->CloseBeatRepeat();
 
     // reset clef changed flag
     m_clefChanged = 0;
@@ -1976,6 +1977,8 @@ bool MusicXmlInput::ReadMusicXmlMeasure(
             this->ReadMusicXmlPrint(child, section);
         }
     }
+
+    this->CloseBeatRepeat();
 
     // set metcon to false for pickup measures
     int measureTotal = m_ppq * 4;
@@ -2113,6 +2116,26 @@ void MusicXmlInput::ReadMusicXmlAttributes(pugi::xml_node node, Section *section
     if (measureSlash) {
         m_slash = (HasAttributeWithValue(measureSlash.node(), "type", "start")) ? true : false;
     }
+    // A stretch drawn as beat-repeat slashes: its notes stay in the file (they are what is played) and are
+    // replaced by one <beatRpt> for each beat, see ReadMusicXmlNote
+    for (pugi::xpath_node beatRepeat : node.select_nodes("measure-style/beat-repeat")) {
+        this->CloseBeatRepeat();
+        m_beatRpt = HasAttributeWithValue(beatRepeat.node(), "type", "start");
+        m_beatRptSlashes = beatRepeat.node().attribute("slashes").as_int(1);
+    }
+}
+
+void MusicXmlInput::CloseBeatRepeat()
+{
+    // A sign that stands for anything but one beat (the stretch stopped within a beat, or a note in it was longer)
+    // lasts what it covers
+    if (m_beatRptCurrent && (m_ppq > 0) && (m_beatRptDur > 0)) {
+        const double beats = (double)m_beatRptDur * (double)m_meterUnit / (double)(4 * m_ppq);
+        if (std::abs(beats - 1.0) > 0.0001) m_beatRptCurrent->SetBeatdef(beats);
+    }
+    m_beatRptCurrent = NULL;
+    m_beatRptLayer = NULL;
+    m_beatRptDur = 0;
 }
 
 void MusicXmlInput::ReadMusicXmlBackup(pugi::xml_node node, Measure *measure, const std::string &measureNum)
@@ -2943,6 +2966,38 @@ void MusicXmlInput::ReadMusicXmlNote(
         if (!mRpt) {
             mRpt = new MRpt();
             this->AddLayerElement(layer, mRpt);
+        }
+        return;
+    }
+
+    // for beat repeats add one <beatRpt> for each beat in place of the notes and rests it covers and return
+    if (m_beatRpt && (m_ppq > 0)) {
+        const int covered = (isChord || node.child("grace")) ? 0 : node.child("duration").text().as_int();
+        if (covered > 0) {
+            // the beat: the meter unit, or three of them in a compound meter
+            int count = 0;
+            for (const int &num : m_meterCount) count += num;
+            const bool isCompound = (m_meterUnit >= 8) && (count > 3) && (count % 3 == 0);
+            const int beat = std::max(1, 4 * m_ppq * (isCompound ? 3 : 1) / m_meterUnit);
+            if (!m_beatRptCurrent || (m_beatRptLayer != layer) || (m_beatRptDur >= beat)) {
+                this->CloseBeatRepeat();
+                BeatRpt *beatRpt = new BeatRpt();
+                switch (m_beatRptSlashes) {
+                    case 2: beatRpt->SetSlash(BEATRPT_REND_2); break;
+                    case 3: beatRpt->SetSlash(BEATRPT_REND_3); break;
+                    case 4: beatRpt->SetSlash(BEATRPT_REND_4); break;
+                    case 5: beatRpt->SetSlash(BEATRPT_REND_5); break;
+                    default: beatRpt->SetSlash(BEATRPT_REND_1); break;
+                }
+                this->AddLayerElement(layer, beatRpt, covered);
+                if (beatRpt->GetParent()) {
+                    m_beatRptCurrent = beatRpt;
+                    m_beatRptLayer = layer;
+                }
+            }
+            m_beatRptDur += covered;
+            m_durTotal += covered;
+            m_layerEndTimes[layer] = m_durTotal;
         }
         return;
     }
