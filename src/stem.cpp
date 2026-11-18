@@ -204,7 +204,10 @@ void Stem::CalculateStemModRelY(const Doc *doc, const Staff *staff)
         assert(chord);
         note = (sign > 0) ? chord->GetTopNote() : chord->GetBottomNote();
     }
-    if (!note || note->IsGraceNote() || note->GetDrawingCueSize()) return;
+    // A cue note takes its tremolo strokes too, at cue size (a part's cue of
+    // repeated notes is written so); a grace note's slash is drawn elsewhere.
+    if (!note || note->IsGraceNote()) return;
+    const bool cueSize = note->GetDrawingCueSize();
 
     // Get stem mod for the element
     data_STEMMODIFIER stemMod = STEMMODIFIER_NONE;
@@ -221,8 +224,9 @@ void Stem::CalculateStemModRelY(const Doc *doc, const Staff *staff)
     const char32_t code = this->StemModToGlyph(stemMod);
     if (!code) return;
 
-    const int unit = doc->GetDrawingUnit(staff->m_drawingStaffSize);
-    const int glyphHalfHeight = doc->GetGlyphHeight(code, staff->m_drawingStaffSize, false) / 2;
+    int unit = doc->GetDrawingUnit(staff->m_drawingStaffSize);
+    if (cueSize) unit = doc->GetCueSize(unit);
+    const int glyphHalfHeight = doc->GetGlyphHeight(code, staff->m_drawingStaffSize, cueSize) / 2;
     const int noteLoc = note->GetDrawingLoc();
     int height = 2 * unit;
     switch (stemMod) {
@@ -235,7 +239,7 @@ void Stem::CalculateStemModRelY(const Doc *doc, const Staff *staff)
             if (noteLoc % 2 == 0) height += unit;
             height += glyphHalfHeight;
             if (stemMod == STEMMODIFIER_6slash)
-                height += doc->GetGlyphHeight(SMUFL_E220_tremolo1, staff->m_drawingStaffSize, false) / 2;
+                height += doc->GetGlyphHeight(SMUFL_E220_tremolo1, staff->m_drawingStaffSize, cueSize) / 2;
             break;
         }
         case STEMMODIFIER_sprech: [[fallthrough]];

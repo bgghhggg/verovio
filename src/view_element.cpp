@@ -1843,7 +1843,9 @@ void View::DrawStemMod(DeviceContext *dc, LayerElement *element, Staff *staff)
         assert(chord);
         note = (stemDir == STEMDIRECTION_up) ? chord->GetTopNote() : chord->GetBottomNote();
     }
-    if (!note || note->IsGraceNote() || note->GetDrawingCueSize()) return;
+    // Cue notes take their strokes at cue size (Stem::CalculateStemModRelY).
+    if (!note || note->IsGraceNote()) return;
+    const bool cueSize = note->GetDrawingCueSize();
 
     // Get duration for the element
     DurationInterface *duration = childElement->GetDurationInterface();
@@ -1864,16 +1866,16 @@ void View::DrawStemMod(DeviceContext *dc, LayerElement *element, Staff *staff)
         if (stemMod == STEMMODIFIER_6slash) {
             const int unit = m_doc->GetDrawingUnit(staff->m_drawingStaffSize);
             const int sign = (stemDir == STEMDIRECTION_up) ? 1 : -1;
-            const int slash1height = m_doc->GetGlyphHeight(SMUFL_E220_tremolo1, staff->m_drawingStaffSize, false);
-            const int slash6height = m_doc->GetGlyphHeight(code, staff->m_drawingStaffSize, false);
+            const int slash1height = m_doc->GetGlyphHeight(SMUFL_E220_tremolo1, staff->m_drawingStaffSize, cueSize);
+            const int slash6height = m_doc->GetGlyphHeight(code, staff->m_drawingStaffSize, cueSize);
             // we need to take half (0.5) of the height difference between to glyphs for the the initial position and
             // add a quarter (0.25) of the glyph to account for the height of slash side and white space between
             // slashes. This results in 0.75 adjustment of the height
             adjust = -sign * unit;
             const int slash1adjust = sign * 0.75 * (slash6height - slash1height) + adjust;
-            this->DrawSmuflCode(dc, x, y + slash1adjust, SMUFL_E220_tremolo1, staff->m_drawingStaffSize, false);
+            this->DrawSmuflCode(dc, x, y + slash1adjust, SMUFL_E220_tremolo1, staff->m_drawingStaffSize, cueSize);
         }
-        this->DrawSmuflCode(dc, x, y + adjust, code, staff->m_drawingStaffSize, false);
+        this->DrawSmuflCode(dc, x, y + adjust, code, staff->m_drawingStaffSize, cueSize);
     }
 }
 
