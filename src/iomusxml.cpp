@@ -2295,14 +2295,28 @@ void MusicXmlInput::ReadMusicXmlDirection(
                 // if this is empty, most likely we're dealing with an extender
             }
             else {
-                const int measureDifference
-                    = m_measureCounts.at(measure) - m_bracketStack.front().second.m_lastMeasureCount;
-                m_bracketStack.front().first->SetLendsym(
-                    this->ConvertLineEndSymbol(bracket.attribute("line-end").as_string()));
+                // The open bracket of the same number closes (the oldest of them, as before when every bracket
+                // had the same number); none of that number, the oldest one.
+                auto open = std::find_if(m_bracketStack.begin(), m_bracketStack.end(),
+                    [voiceNumber](const auto &entry) { return entry.second.m_dirN == voiceNumber; });
+                if (open == m_bracketStack.end()) open = m_bracketStack.begin();
+                BracketSpan *bracketSpan = open->first;
+                const int measureDifference = m_measureCounts.at(measure) - open->second.m_lastMeasureCount;
+                bracketSpan->SetLendsym(this->ConvertLineEndSymbol(bracket.attribute("line-end").as_string()));
                 if (measureDifference >= 0) {
-                    m_bracketStack.front().first->SetTstamp2(std::pair<int, double>(measureDifference, timeStamp));
+                    bracketSpan->SetTstamp2(std::pair<int, double>(measureDifference, timeStamp));
                 }
-                m_bracketStack.erase(m_bracketStack.begin());
+                // A bracket goes into the list of control elements in the order it closes, so of two lines
+                // that overlap, the one that ends first (the shorter, inside the other) is placed first, next
+                // to the staff, and the longer outside it.
+                auto element = std::find_if(m_controlElements.begin(), m_controlElements.end(),
+                    [bracketSpan](const auto &entry) { return entry.second == bracketSpan; });
+                if (element != m_controlElements.end()) {
+                    const auto entry = *element;
+                    m_controlElements.erase(element);
+                    m_controlElements.push_back(entry);
+                }
+                m_bracketStack.erase(open);
             }
         }
         else {
@@ -2311,7 +2325,7 @@ void MusicXmlInput::ReadMusicXmlDirection(
             bracketSpan->SetColor(bracket.attribute("color").as_string());
             bracketSpan->SetLform(
                 bracketSpan->AttLineRendBase::StrToLineform(bracket.attribute("line-type").as_string()));
-            // bracketSpan->SetPlace(bracketSpan->AttPlacementRelStaff::StrToStaffrel(placeStr.c_str()));
+            bracketSpan->SetPlace(bracketSpan->AttPlacementRelStaff::StrToStaffrel(placeStr.c_str()));
             bracketSpan->SetFunc(bracketSpanLog_FUNC_uspecified);
             bracketSpan->SetLstartsym(ConvertLineEndSymbol(bracket.attribute("line-end").as_string()));
             bracketSpan->SetTstamp(timeStamp);

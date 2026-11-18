@@ -2105,6 +2105,7 @@ void MEIOutput::WriteBracketSpan(pugi::xml_node currentNode, BracketSpan *bracke
     this->WriteControlElement(currentNode, bracketSpan);
     this->WriteTimeSpanningInterface(currentNode, bracketSpan);
     bracketSpan->WriteBracketSpanLog(currentNode);
+    bracketSpan->WritePlacementRelStaff(currentNode);
     bracketSpan->WriteLineRend(currentNode);
     bracketSpan->WriteLineRendBase(currentNode);
 }
@@ -6132,6 +6133,7 @@ bool MEIInput::ReadBracketSpan(Object *parent, pugi::xml_node bracketSpan)
     this->ReadTimeSpanningInterface(bracketSpan, vrvBracketSpan);
     vrvBracketSpan->ReadBracketSpanLog(bracketSpan);
     vrvBracketSpan->ReadLineRend(bracketSpan);
+    vrvBracketSpan->ReadPlacementRelStaff(bracketSpan);
     vrvBracketSpan->ReadLineRendBase(bracketSpan);
 
     parent->AddChild(vrvBracketSpan);

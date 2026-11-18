@@ -28,12 +28,13 @@ namespace vrv {
 static const ClassRegistrar<BracketSpan> s_factory("bracketSpan", BRACKETSPAN);
 
 BracketSpan::BracketSpan()
-    : ControlElement(BRACKETSPAN), TimeSpanningInterface(), AttBracketSpanLog(), AttLineRend(), AttLineRendBase()
+    : ControlElement(BRACKETSPAN), TimeSpanningInterface(), AttBracketSpanLog(), AttLineRend(), AttLineRendBase(), AttPlacementRelStaff()
 {
     this->RegisterInterface(TimeSpanningInterface::GetAttClasses(), TimeSpanningInterface::IsInterface());
     this->RegisterAttClass(ATT_BRACKETSPANLOG);
     this->RegisterAttClass(ATT_LINEREND);
     this->RegisterAttClass(ATT_LINERENDBASE);
+    this->RegisterAttClass(ATT_PLACEMENTRELSTAFF);
 
     this->Reset();
 }
@@ -47,6 +48,7 @@ void BracketSpan::Reset()
     this->ResetBracketSpanLog();
     this->ResetLineRend();
     this->ResetLineRendBase();
+    this->ResetPlacementRelStaff();
 }
 
 int BracketSpan::GetLineWidth(const Doc *doc, int unit) const

@@ -225,7 +225,10 @@ FloatingPositioner::FloatingPositioner(FloatingObject *object, StaffAlignment *a
         m_place = STAFFREL_above;
     }
     else if (object->Is(BRACKETSPAN)) {
-        m_place = STAFFREL_above;
+        BracketSpan *bracketSpan = vrv_cast<BracketSpan *>(object);
+        assert(bracketSpan);
+        // bracketSpan above by default
+        m_place = (bracketSpan->GetPlace() == STAFFREL_below) ? STAFFREL_below : STAFFREL_above;
     }
     else if (object->Is(BREATH)) {
         Breath *breath = vrv_cast<Breath *>(object);

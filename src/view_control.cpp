@@ -583,6 +583,8 @@ void View::DrawBracketSpan(
 
     const int unit = m_doc->GetDrawingUnit(staff->m_drawingStaffSize);
     const int lineWidth = bracketSpan->GetLineWidth(m_doc, unit);
+    // The hooks point towards the staff: down from a line above it, up from one below.
+    const int hook = (bracketSpan->GetPlace() == STAFFREL_below) ? -unit * 2 : unit * 2;
 
     x1 += lineWidth / 2;
     x2 -= lineWidth / 2;
@@ -596,7 +598,7 @@ void View::DrawBracketSpan(
         if (bracketSpan->GetLstartsym() != LINESTARTENDSYMBOL_none) {
             // Left hook
             Point hookLeft[3];
-            hookLeft[0] = { this->ToDeviceContextX(x1), this->ToDeviceContextY(y - unit * 2) };
+            hookLeft[0] = { this->ToDeviceContextX(x1), this->ToDeviceContextY(y - hook) };
             hookLeft[1] = { this->ToDeviceContextX(x1), this->ToDeviceContextY(y) };
             hookLeft[2] = { this->ToDeviceContextX(x1 + unit), this->ToDeviceContextY(y) };
             dc->DrawPolyline(3, hookLeft);
@@ -609,7 +611,7 @@ void View::DrawBracketSpan(
         if (bracketSpan->GetLendsym() != LINESTARTENDSYMBOL_none) {
             // Right hook
             Point hookRight[3];
-            hookRight[0] = { this->ToDeviceContextX(x2), this->ToDeviceContextY(y - unit * 2) };
+            hookRight[0] = { this->ToDeviceContextX(x2), this->ToDeviceContextY(y - hook) };
             hookRight[1] = { this->ToDeviceContextX(x2), this->ToDeviceContextY(y) };
             hookRight[2] = { this->ToDeviceContextX(x2 - unit), this->ToDeviceContextY(y) };
             dc->DrawPolyline(3, hookRight);
